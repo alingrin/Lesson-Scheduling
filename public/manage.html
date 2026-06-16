@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Manage Booking</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Manage Booking</h1>
+      <div id="info"></div>
+      <form id="update-form">
+        <label>Full Name<br><input name="studentName"></label>
+        <label>Email<br><input name="studentEmail" type="email"></label>
+        <label>Goals / Level<br><textarea name="notes"></textarea></label>
+        <button id="update">Update</button>
+        <button id="cancel" type="button">Cancel Lesson</button>
+      </form>
+      <section id="reschedule" style="margin-top:18px">
+        <h3>Reschedule</h3>
+        <p class="hint">Choose a new slot to move this lesson.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+          <button id="reschedule-prev" type="button">Prev</button>
+          <span id="reschedule-label" style="font-weight:600"></span>
+          <button id="reschedule-next" type="button">Next</button>
+        </div>
+        <div id="reschedule-calendar" class="calendar-grid" style="height:280px;align-items:stretch"></div>
+        <div style="margin-top:8px">
+          <button id="move" disabled>Move Lesson</button>
+        </div>
+      </section>
+      <p id="status"></p>
+      <p><a href="/">Back to calendar</a></p>
+    </main>
+    <script src="/manage.js"></script>
+  </body>
+</html>

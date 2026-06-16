@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Miki's Spanish Lessons - Book</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body class="calendar-layout">
+    <main>
+      <h1>Miki's Spanish Lessons</h1>
+      <p id="tz">Detecting timezone...</p>
+      <div style="margin-bottom:12px; display:flex; gap:12px; flex-wrap:wrap; align-items:center">
+        <label>Timezone: 
+          <select id="tz-select" style="min-width:220px"></select>
+        </label>
+        <label>View: 
+          <select id="view-select">
+            <option value="week">Week</option>
+            <option value="3day">3-Day</option>
+            <option value="month">Month</option>
+          </select>
+        </label>
+        <div id="view-nav" style="display:flex; gap:8px; align-items:center">
+          <button id="prev-view" type="button">Prev</button>
+          <span id="view-label"></span>
+          <button id="next-view" type="button">Next</button>
+        </div>
+      </div>
+      <section id="slots">
+        <h2>Available Slots</h2>
+        <p class="hint">Click a slot to continue to booking.</p>
+        <div id="calendar" class="calendar-grid"></div>
+      </section>
+
+      <!-- Manage Booking removed: students can use emailed manage links or tokens on the Manage page directly. -->
+
+      <section id="booking" style="margin-top:14px">
+        <h2>Your Booking</h2>
+        <div id="booking-links"></div>
+      </section>
+      <div style="position:fixed;right:12px;bottom:12px">
+        <a href="/teacher-login" style="font-size:12px;background:#fff;border:1px solid #AA151B;padding:6px 8px;border-radius:4px;color:#AA151B;text-decoration:none;">Teacher login</a>
+      </div>
+    </main>
+    <div id="modal" class="modal" hidden>
+      <div class="modal-panel">
+        <button id="modal-close" class="modal-close">✕</button>
+        <h2>Confirm Booking</h2>
+        <div id="modal-slot-info"></div>
+        <form id="modal-form">
+          <label>Full Name<br><input name="studentName" required></label>
+          <label>Email<br><input name="studentEmail" type="email" required></label>
+          <label>Goals / Level<br><textarea name="notes"></textarea></label>
+          <input type="hidden" name="isoStart">
+          <input type="hidden" name="isoEnd">
+          <button id="modal-submit">Book Lesson</button>
+        </form>
+        <p id="modal-status"></p>
+      </div>
+    </div>
+    <script src="/app.js?v=1"></script>
+  </body>
+</html>

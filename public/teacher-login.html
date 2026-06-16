@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Teacher Login</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Teacher Login</h1>
+      <p class="hint">Enter the teacher token to access the admin view.</p>
+      <form method="post" action="/teacher-login">
+        <label>Token<br><input name="token" type="password" required style="width:320px"></label>
+        <div style="margin-top:8px">
+          <button type="submit">Sign in</button>
+        </div>
+      </form>
+      <p style="color:#c00">%ERROR%</p>
+      <p><a href="/">Back to student view</a></p>
+    </main>
+  </body>
+</html>

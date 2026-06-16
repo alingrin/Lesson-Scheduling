@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Confirm Booking</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Confirm Your Lesson</h1>
+      <div id="slot-info"></div>
+      <form id="confirm-form">
+        <label>Full Name<br><input name="studentName" required></label>
+        <label>Email<br><input name="studentEmail" type="email" required></label>
+        <label>Goals / Level<br><textarea name="notes"></textarea></label>
+        <input type="hidden" name="isoStart">
+        <input type="hidden" name="isoEnd">
+        <button id="confirm">Book Lesson</button>
+      </form>
+      <p id="status"></p>
+      <section id="booking" style="margin-top:14px">
+        <h2>Your Booking</h2>
+        <div id="booking-links"></div>
+      </section>
+      <p><a href="/">Back to calendar</a></p>
+    </main>
+    <script src="/confirm.js"></script>
+  </body>
+</html>
