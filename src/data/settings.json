@@ -1,0 +1,12 @@
+{
+  "workDayStart": 12,
+  "workDayEnd": 16,
+  "workDays": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "workTimezone": "Europe/London"
+}
