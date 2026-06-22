@@ -20,6 +20,10 @@ export default function StudentPage() {
   const [modal, setModal] = useState<{ slot: Slot } | null>(null);
   const [bookingStatus, setBookingStatus] = useState('');
   const [manageLink, setManageLink] = useState('');
+  const [findModal, setFindModal] = useState(false);
+  const [findEmail, setFindEmail] = useState('');
+  const [findStatus, setFindStatus] = useState('');
+  const [foundBookings, setFoundBookings] = useState<{ summary: string; start: string; manageUrl: string }[]>([]);
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -93,6 +97,17 @@ export default function StudentPage() {
     setTimeout(() => setModal(null), 800);
   }
 
+  async function findBooking(e: React.FormEvent) {
+    e.preventDefault();
+    setFindStatus('Searching...');
+    setFoundBookings([]);
+    const res = await fetch('/api/find-booking', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: findEmail }) });
+    const data = await res.json();
+    if (!res.ok) { setFindStatus(data.error); return; }
+    setFoundBookings(data.bookings);
+    setFindStatus('');
+  }
+
   const span = 7;
 
   return (
@@ -119,6 +134,12 @@ export default function StudentPage() {
           <span className="text-sm font-medium">{viewLabel()}</span>
           <button onClick={next} className="border rounded px-2 py-1 text-sm hover:bg-es-yellow-light">Next</button>
         </div>
+        {manageLink && (
+          <a href={manageLink} className="border border-es-red text-es-red rounded px-3 py-1 text-sm hover:bg-es-red-light">Manage your booking</a>
+        )}
+        <button onClick={() => { setFindModal(true); setFindStatus(''); setFoundBookings([]); }} className="border border-es-red text-es-red rounded px-3 py-1 text-sm hover:bg-es-red-light">
+          Find my booking
+        </button>
       </div>
 
       <section>
@@ -176,7 +197,6 @@ export default function StudentPage() {
         )}
       </section>
 
-      {manageLink && <p className="mt-4 text-sm"><a href={manageLink} className="text-es-red underline">Manage your booking</a></p>}
 
       {modal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
@@ -209,6 +229,32 @@ export default function StudentPage() {
               <button type="submit" className="w-full bg-es-red text-white rounded px-4 py-2 text-sm hover:bg-es-red-dark">Book Lesson</button>
               {bookingStatus && <p className="text-sm text-center text-gray-600">{bookingStatus}</p>}
             </form>
+          </div>
+        </div>
+      )}
+
+      {findModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 relative">
+            <button onClick={() => setFindModal(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700">✕</button>
+            <h2 className="text-lg font-semibold mb-1">Find your booking</h2>
+            <p className="text-sm text-gray-600 mb-4">Enter the email you used when booking.</p>
+            <form onSubmit={findBooking} className="space-y-3">
+              <input type="email" required placeholder="your@email.com" value={findEmail} onChange={(e) => setFindEmail(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm" />
+              <button type="submit" className="w-full bg-es-red text-white rounded px-4 py-2 text-sm hover:bg-es-red-dark">Find booking</button>
+              {findStatus && <p className="text-sm text-center text-gray-600">{findStatus}</p>}
+            </form>
+            {foundBookings.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {foundBookings.map((b) => (
+                  <li key={b.manageUrl} className="border rounded p-2 bg-es-yellow-light text-sm">
+                    <div className="font-medium">{b.summary}</div>
+                    <div className="text-gray-600 text-xs">{new Date(b.start).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: tz })}</div>
+                    <a href={b.manageUrl} className="text-es-red underline text-xs">Manage this booking →</a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       )}
