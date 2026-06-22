@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import { addDays, dayKeyForISO, getDefaultTZ, getTimeZones } from '@/components/tz-utils';
 
 interface Slot { start: string; end: string }
-interface EventInfo { id: string; summary: string; start: { dateTime?: string; date?: string }; end: { dateTime?: string; date?: string }; attendees?: { email: string }[]; description?: string }
+interface EventInfo { id: string; summary: string; start: { dateTime?: string; date?: string }; end: { dateTime?: string; date?: string }; attendees?: { email: string }[]; description?: string; conferenceData?: { entryPoints?: { entryPointType: string; uri: string }[] } }
 
 function ManageContent() {
   const searchParams = useSearchParams();
@@ -120,12 +120,20 @@ function ManageContent() {
 
       {event && (
         <>
-          <div className="border rounded p-3 bg-es-yellow-light text-sm">
+          <div className="border rounded p-3 bg-es-yellow-light text-sm space-y-1">
             <strong>{event.summary}</strong><br />
             {(() => {
               const s = new Date(event.start.dateTime || event.start.date!);
               const e = new Date(event.end.dateTime || event.end.date!);
               return `${s.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: tz })} — ${e.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: tz })}`;
+            })()}
+            {(() => {
+              const meetLink = (event.conferenceData?.entryPoints ?? []).find((ep) => ep.entryPointType === 'video')?.uri;
+              return meetLink ? (
+                <div className="mt-1">
+                  <a href={meetLink} target="_blank" rel="noreferrer" className="text-es-red underline font-medium">Join Google Meet</a>
+                </div>
+              ) : null;
             })()}
           </div>
 

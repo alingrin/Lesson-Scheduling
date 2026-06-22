@@ -193,6 +193,19 @@ export default function StudentPage() {
               <label className="block text-sm">Full Name<br /><input name="studentName" required className="mt-1 w-full border rounded px-3 py-1.5 text-sm" /></label>
               <label className="block text-sm">Email<br /><input name="studentEmail" type="email" required className="mt-1 w-full border rounded px-3 py-1.5 text-sm" /></label>
               <label className="block text-sm">Goals / Level<br /><textarea name="notes" className="mt-1 w-full border rounded px-3 py-1.5 text-sm" rows={3} /></label>
+              <div className="block text-sm">
+                Lesson type
+                <div className="mt-1 flex gap-4">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="lessonType" value="inperson" defaultChecked className="cursor-pointer" />
+                    In-person
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input type="radio" name="lessonType" value="meet" className="cursor-pointer" />
+                    Google Meet
+                  </label>
+                </div>
+              </div>
               <button type="submit" className="w-full bg-es-red text-white rounded px-4 py-2 text-sm hover:bg-es-red-dark">Book Lesson</button>
               {bookingStatus && <p className="text-sm text-center text-gray-600">{bookingStatus}</p>}
             </form>
