@@ -7,10 +7,17 @@ let tz = getSavedTZ();
 function getSavedView() { return localStorage.getItem('calendar_view') || 'week'; }
 function setSavedView(v) { localStorage.setItem('calendar_view', v); }
 let viewMode = getSavedView();
+function getSavedDays() { return localStorage.getItem('calendar_days') || '14'; }
+function setSavedDays(v) { localStorage.setItem('calendar_days', v); }
 let currentMonth = startOfMonthUTC(new Date());
-let currentStart = startOfWeekInTZ(new Date(), tz);
+let currentStart = new Date(`${formatDateForTZ(new Date(), tz)}T12:00:00Z`);
 
 const daysInput = document.getElementById('days');
+daysInput.value = getSavedDays();
+daysInput.addEventListener('change', () => {
+  setSavedDays(daysInput.value);
+  if (viewMode === 'custom') { updateViewLabel(); load(); }
+});
 const refreshBtn = document.getElementById('refresh');
 const saveBtn = document.getElementById('save');
 const selectAllBtn = document.getElementById('select-all-displayed');
@@ -43,7 +50,10 @@ const viewSelect = document.getElementById('view-select');
 const prevViewBtn = document.getElementById('prev-view');
 const nextViewBtn = document.getElementById('next-view');
 const viewLabel = document.getElementById('view-label');
-if (viewSelect) { viewSelect.value = viewMode; viewSelect.addEventListener('change', (e) => { viewMode = e.target.value; setSavedView(viewMode); if (viewMode === 'week' || viewMode === '3day') currentStart = startOfWeekInTZ(currentStart || new Date(), tz); if (viewMode === 'month') currentMonth = startOfMonthUTC(currentMonth || new Date()); updateViewLabel(); load(); }); }
+const daysLabel = document.getElementById('days-label');
+function updateDaysLabelVisibility() { if (daysLabel) daysLabel.style.display = viewMode === 'custom' ? '' : 'none'; }
+if (viewSelect) { viewSelect.value = viewMode; viewSelect.addEventListener('change', (e) => { viewMode = e.target.value; setSavedView(viewMode); if (viewMode === 'week' || viewMode === '3day' || viewMode === 'custom') currentStart = startOfWeekInTZ(currentStart || new Date(), tz); if (viewMode === 'month') currentMonth = startOfMonthUTC(currentMonth || new Date()); updateDaysLabelVisibility(); updateViewLabel(); load(); }); }
+updateDaysLabelVisibility();
 
 function formatDateForTZ(date, timeZone) { return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date); }
 function startOfWeekInTZ(date, timeZone) {
@@ -71,9 +81,14 @@ function updateViewLabel() {
     const start = currentStart || startOfWeekInTZ(new Date(), tz);
     const end = addDays(start, 6);
     viewLabel.textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: tz })} — ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: tz })}`;
-  } else {
+  } else if (viewMode === '3day') {
     const start = currentStart || startOfWeekInTZ(new Date(), tz);
     const end = addDays(start, 2);
+    viewLabel.textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: tz })} — ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: tz })}`;
+  } else {
+    const days = parseInt(daysInput.value || '14', 10);
+    const start = currentStart || startOfWeekInTZ(new Date(), tz);
+    const end = addDays(start, days - 1);
     viewLabel.textContent = `${start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: tz })} — ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: tz })}`;
   }
 }
@@ -87,6 +102,8 @@ if (prevViewBtn) {
       currentStart = addDays(currentStart, -7);
     } else if (viewMode === '3day') {
       currentStart = addDays(currentStart, -3);
+    } else if (viewMode === 'custom') {
+      currentStart = addDays(currentStart, -parseInt(daysInput.value || '14', 10));
     }
     updateViewLabel();
     load();
@@ -102,6 +119,8 @@ if (nextViewBtn) {
       currentStart = addDays(currentStart, 7);
     } else if (viewMode === '3day') {
       currentStart = addDays(currentStart, 3);
+    } else if (viewMode === 'custom') {
+      currentStart = addDays(currentStart, parseInt(daysInput.value || '14', 10));
     }
     updateViewLabel();
     load();
@@ -136,6 +155,30 @@ function renderSlots(slots, exposed) {
         });
         weekRow.appendChild(cell);
         dayCursor = addDays(dayCursor,1);
+      }
+      slotsList.appendChild(weekRow);
+    }
+  } else if (viewMode === 'custom') {
+    slotsList.className = 'calendar-grid calendar-month';
+    const numDays = parseInt(daysInput.value || '14', 10);
+    const start = getViewStartDate();
+    let dayCursor = start;
+    for (let r = 0; r < Math.ceil(numDays / 7); r++) {
+      const weekRow = document.createElement('div'); weekRow.className = 'week-row';
+      for (let c = 0; c < 7; c++) {
+        const cell = document.createElement('div'); cell.className = 'month-cell';
+        if (r * 7 + c < numDays) {
+          const key = dayKeyForISO(dayCursor.toISOString());
+          const hdr = document.createElement('div'); hdr.className = 'cell-day'; hdr.textContent = dayCursor.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: tz }); cell.appendChild(hdr);
+          slots.filter(s => dayKeyForISO(s.start) === key).forEach(s => {
+            const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.start = s.start; cb.dataset.end = s.end; cb.dataset.day = key; if (exposed.some(e => e.start === s.start && e.end === s.end)) cb.checked = true;
+            const lbl = document.createElement('label'); lbl.style.display = 'block'; lbl.appendChild(cb);
+            const t = document.createElement('span'); t.textContent = ` ${new Date(s.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: tz })}`; lbl.appendChild(t);
+            cell.appendChild(lbl);
+          });
+          dayCursor = addDays(dayCursor, 1);
+        }
+        weekRow.appendChild(cell);
       }
       slotsList.appendChild(weekRow);
     }
@@ -187,6 +230,10 @@ async function load() {
       currentStart = currentStart || startOfWeekInTZ(new Date(), tz);
       queryStart = formatDateForTZ(currentStart, tz);
       queryDays = 3;
+    } else {
+      currentStart = currentStart || startOfWeekInTZ(new Date(), tz);
+      queryStart = formatDateForTZ(currentStart, tz);
+      // queryDays already = days (user value)
     }
     const availUrl = `/api/availability?tz=${encodeURIComponent(tz)}&start=${encodeURIComponent(queryStart)}&days=${queryDays}&teacher=true`;
     const exposedUrl = `/api/exposed-slots`;
@@ -197,8 +244,12 @@ async function load() {
       fetch(exposedUrl, { credentials: 'same-origin', headers }),
     ]);
     if (availRes.status === 403 || exposedRes.status === 403) {
-      // not authenticated — send teacher to login
       window.location.href = '/teacher-login';
+      return;
+    }
+    if (!availRes.ok) {
+      const data = await availRes.json().catch(() => ({}));
+      statusEl.textContent = `Error loading availability: ${data.error || availRes.statusText}`;
       return;
     }
     const avail = await availRes.json();

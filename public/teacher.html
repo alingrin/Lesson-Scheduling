@@ -11,16 +11,17 @@
       <h1>Teacher — Expose Time Slots to Students</h1>
       <p class="hint">Select which available slots should be visible to students.</p>
       <div id="teacher-controls" style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <label>Days to show <input id="days" type="number" value="14" min="1" max="90" style="width:80px"></label>
         <label>Timezone: <select id="tz-select" style="min-width:220px"></select></label>
         <p id="tz" style="margin:0;color:#555"></p>
-        <label>View: 
+        <label>View:
           <select id="view-select">
             <option value="week">Week</option>
             <option value="3day">3-Day</option>
             <option value="month">Month</option>
+            <option value="custom">Custom</option>
           </select>
         </label>
+        <label id="days-label" style="display:none">Days to show <input id="days" type="number" value="14" min="1" max="90" style="width:80px"></label>
         <div id="view-nav" style="display:flex; gap:8px; align-items:center">
           <button id="prev-view" type="button">Prev</button>
           <span id="view-label"></span>

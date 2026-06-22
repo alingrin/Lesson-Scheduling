@@ -153,7 +153,8 @@ router.get('/availability', async (req, res) => {
     res.json({ timezone: tz, slots: filtered });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to compute availability' });
+    const detail = err?.response?.data?.error?.message || err?.message || '';
+    res.status(500).json({ error: `Failed to compute availability${detail ? ': ' + detail : ''}` });
   }
 });
 
