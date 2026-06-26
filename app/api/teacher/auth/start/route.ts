@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   );
   const url = oauth2.generateAuthUrl({
     access_type: 'offline',
-    prompt: 'consent',
+    prompt: 'select_account consent',
     scope: [
       'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/gmail.send',
