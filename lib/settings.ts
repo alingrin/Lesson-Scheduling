@@ -1,5 +1,4 @@
-import fs from 'fs/promises';
-import path from 'path';
+import { Redis } from '@upstash/redis';
 
 export interface TeacherSettings {
   workDayStart: number;   // hour 0-23
@@ -8,8 +7,6 @@ export interface TeacherSettings {
   workTimezone: string;   // IANA timezone, e.g. "Europe/Madrid"
 }
 
-const FILE = path.join(process.cwd(), 'src', 'data', 'settings.json');
-
 const DEFAULTS: TeacherSettings = {
   workDayStart: parseInt(process.env.WORK_DAY_START || '9', 10),
   workDayEnd: parseInt(process.env.WORK_DAY_END || '17', 10),
@@ -17,15 +14,18 @@ const DEFAULTS: TeacherSettings = {
   workTimezone: process.env.WORK_TIMEZONE || 'UTC',
 };
 
+function redis() {
+  return new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+}
+
 export async function readSettings(): Promise<TeacherSettings> {
-  try {
-    return { ...DEFAULTS, ...JSON.parse(await fs.readFile(FILE, 'utf8')) };
-  } catch {
-    return DEFAULTS;
-  }
+  const data = await redis().get<TeacherSettings>('settings');
+  return { ...DEFAULTS, ...(data ?? {}) };
 }
 
 export async function writeSettings(s: TeacherSettings): Promise<void> {
-  await fs.mkdir(path.dirname(FILE), { recursive: true });
-  await fs.writeFile(FILE, JSON.stringify(s, null, 2), 'utf8');
+  await redis().set('settings', s);
 }
