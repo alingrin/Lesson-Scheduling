@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkTeacherToken } from '@/lib/auth';
+import { getTeacherSession } from '@/lib/auth';
 import { readSettings, writeSettings, TeacherSettings } from '@/lib/settings';
 
 export async function GET(request: NextRequest) {
-  if (!checkTeacherToken(request)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!await getTeacherSession(request)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   return NextResponse.json(await readSettings());
 }
 
 export async function POST(request: NextRequest) {
-  if (!checkTeacherToken(request)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!await getTeacherSession(request)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   try {
     const body = await request.json() as Partial<TeacherSettings>;
     const current = await readSettings();

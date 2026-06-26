@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkTeacherToken } from '@/lib/auth';
+import { getTeacherSession } from '@/lib/auth';
 import { getCalendar, CALENDAR_ID } from '@/lib/calendar';
 
 export async function GET(request: NextRequest) {
-  if (!checkTeacherToken(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  if (!await getTeacherSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   try {
     const res = await getCalendar().events.list({
       calendarId: CALENDAR_ID,

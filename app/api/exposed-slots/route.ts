@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkTeacherToken } from '@/lib/auth';
+import { getTeacherSession } from '@/lib/auth';
 import { readExposedSlots, writeExposedSlots } from '@/lib/exposed-slots';
 import { Slot } from '@/lib/slots';
 
 export async function GET(request: NextRequest) {
-  if (!checkTeacherToken(request)) {
+  if (!await getTeacherSession(request)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   const slots = await readExposedSlots();
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!checkTeacherToken(request)) {
+  if (!await getTeacherSession(request)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   try {

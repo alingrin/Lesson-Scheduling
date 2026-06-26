@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { getCalendar, CALENDAR_ID } from '@/lib/calendar';
 import { generateCandidateSlots, filterAvailable } from '@/lib/slots';
 import { readExposedSlots } from '@/lib/exposed-slots';
-import { checkTeacherToken } from '@/lib/auth';
+import { getTeacherSession } from '@/lib/auth';
 import { readSettings } from '@/lib/settings';
 
 export async function GET(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const tz = searchParams.get('tz') || 'UTC';
     const teacherView = searchParams.get('teacher') === 'true';
 
-    if (teacherView && !checkTeacherToken(request)) {
+    if (teacherView && !await getTeacherSession(request)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
