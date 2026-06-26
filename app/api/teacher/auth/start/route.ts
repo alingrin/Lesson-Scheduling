@@ -1,13 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const origin = new URL(request.url).origin;
   const oauth2 = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${BASE_URL}/api/teacher/auth/callback`,
+    `${origin}/api/teacher/auth/callback`,
   );
   const url = oauth2.generateAuthUrl({
     access_type: 'offline',
