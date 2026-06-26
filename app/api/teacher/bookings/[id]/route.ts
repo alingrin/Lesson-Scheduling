@@ -35,11 +35,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Failed to cancel booking' }, { status: 500 });
   }
 
-  // Step 2: send Gmail — best-effort, never blocks the cancellation
-  if (studentEmail && message?.trim()) {
+  // Step 2: send Gmail — always send when we have a student email, message is optional
+  if (studentEmail) {
     try {
       const creds = await loadTeacherCredentials();
-      if (!creds) throw new Error('No teacher credentials in Redis — please log out and log in again.');
+      if (!creds) throw new Error('no_credentials');
 
       const auth = new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
@@ -48,10 +48,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       auth.setCredentials({ refresh_token: creds.refreshToken });
       const gmail = google.gmail({ version: 'v1', auth });
 
-      const note = `<blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#555;margin:12px 0">${message.trim()}</blockquote>`;
-      const html = `<p>Hi ${studentName!},</p><p>Your Spanish lesson scheduled for <strong>${startStr!}</strong> has been cancelled by your teacher.</p><p><strong>Message from your teacher:</strong></p>${note}<p>You can book a new lesson at <a href="${BASE_URL}">${BASE_URL}</a>.</p>`;
+      const note = message?.trim()
+        ? `<p><strong>Message from your teacher:</strong></p><blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#555;margin:12px 0">${message.trim()}</blockquote>`
+        : '';
+      const html = `<p>Hi ${studentName!},</p><p>Your Spanish lesson scheduled for <strong>${startStr!}</strong> has been cancelled by your teacher.</p>${note}<p>You can book a new lesson at <a href="${BASE_URL}">${BASE_URL}</a>.</p>`;
       const raw = [
-        `From: ${creds.email}`,
         `To: ${studentEmail}`,
         `Subject: Your Spanish lesson on ${startStr!} has been cancelled`,
         'MIME-Version: 1.0',
@@ -67,10 +68,11 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
       return NextResponse.json({ ok: true });
     } catch (err) {
-      console.error('Cancel: Gmail error', err);
-      const hint = (err as Error).message?.includes('insufficient')
-        ? 'Log out and log in again to grant Gmail permission.'
-        : 'Email could not be sent.';
+      const msg = (err as Error).message ?? '';
+      console.error('Cancel: Gmail error', msg);
+      const hint = msg === 'no_credentials' || msg.includes('insufficient') || msg.includes('unauthorized') || msg.includes('401') || msg.includes('403')
+        ? 'Log out and log in again to grant Gmail permission, then the email will work.'
+        : `Email could not be sent: ${msg}`;
       return NextResponse.json({ ok: true, emailError: hint });
     }
   }

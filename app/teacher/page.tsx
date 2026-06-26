@@ -39,6 +39,7 @@ export default function TeacherPage() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancelMsg, setCancelMsg] = useState('');
   const [cancelStatus, setCancelStatus] = useState('');
+  const [emailError, setEmailError] = useState('');
   const initialized = useRef(false);
 
   const slotKey = (s: Slot) => `${s.start}|${s.end}`;
@@ -97,7 +98,7 @@ export default function TeacherPage() {
     setCancellingId(null);
     setCancelMsg('');
     setCancelStatus('');
-    if (d.emailError) setStatus(`Lesson cancelled. Note: ${d.emailError}`);
+    setEmailError(d.emailError ?? '');
     loadBookings();
   }
 
@@ -358,6 +359,12 @@ export default function TeacherPage() {
           <button onClick={loadBookings} className="border rounded px-2 py-0.5 text-sm hover:bg-es-yellow-light">Refresh</button>
           {bookingsStatus && <span className="text-sm text-gray-500">{bookingsStatus}</span>}
         </div>
+        {emailError && (
+          <div className="mb-3 max-w-xl rounded border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800">
+            Lesson cancelled, but the email to the student failed: {emailError}
+            <button onClick={() => setEmailError('')} className="ml-2 underline text-xs">Dismiss</button>
+          </div>
+        )}
         {bookings.length === 0 && !bookingsStatus && (
           <p className="text-sm text-gray-400">No upcoming bookings.</p>
         )}
