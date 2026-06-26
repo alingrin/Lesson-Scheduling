@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTeacherSession } from '@/lib/auth';
 import { getCalendar, CALENDAR_ID } from '@/lib/calendar';
-import { google } from 'googleapis';
+import nodemailer from 'nodemailer';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const FROM_EMAIL = process.env.FROM_EMAIL || process.env.SMTP_USER || '';
+
+const mailer =
+  process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS
+    ? nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT, 10),
+        secure: process.env.SMTP_PORT === '465',
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      })
+    : null;
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function DELETE(request: NextRequest, { params }: Params) {
-  const session = await getTeacherSession(request);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  if (!await getTeacherSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
   const { id } = await params;
   const { message } = await request.json().catch(() => ({}));
@@ -27,32 +37,13 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     await calendar.events.delete({ calendarId: CALENDAR_ID, eventId: id, sendUpdates: 'all' });
 
-    if (studentEmail && message?.trim()) {
-      const auth = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-      );
-      auth.setCredentials({
-        access_token: session.accessToken,
-        refresh_token: session.refreshToken,
-      });
-      const gmail = google.gmail({ version: 'v1', auth });
-
+    if (mailer && studentEmail && message?.trim()) {
       const note = `<blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#555;margin:12px 0">${message.trim()}</blockquote>`;
-      const html = `<p>Hi ${studentName},</p><p>Your Spanish lesson scheduled for <strong>${startStr}</strong> has been cancelled by your teacher.</p><p><strong>Message from your teacher:</strong></p>${note}<p>You can book a new lesson at <a href="${BASE_URL}">${BASE_URL}</a>.</p>`;
-
-      const raw = [
-        `To: ${studentEmail}`,
-        `Subject: Your Spanish lesson on ${startStr} has been cancelled`,
-        'MIME-Version: 1.0',
-        'Content-Type: text/html; charset=utf-8',
-        '',
-        html,
-      ].join('\r\n');
-
-      await gmail.users.messages.send({
-        userId: 'me',
-        requestBody: { raw: Buffer.from(raw).toString('base64url') },
+      await mailer.sendMail({
+        from: FROM_EMAIL,
+        to: studentEmail,
+        subject: `Your Spanish lesson on ${startStr} has been cancelled`,
+        html: `<p>Hi ${studentName},</p><p>Your Spanish lesson scheduled for <strong>${startStr}</strong> has been cancelled by your teacher.</p><p><strong>Message from your teacher:</strong></p>${note}<p>You can book a new lesson at <a href="${BASE_URL}">${BASE_URL}</a>.</p>`,
       });
     }
 
