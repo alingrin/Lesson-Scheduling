@@ -6,7 +6,7 @@ type Params = { params: Promise<{ id: string }> };
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   try {
-    const res = await getCalendar().events.get({ calendarId: CALENDAR_ID, eventId: id });
+    const res = await (await getCalendar()).events.get({ calendarId: CALENDAR_ID, eventId: id });
     return NextResponse.json({ event: res.data });
   } catch (err) {
     console.error(err);
@@ -18,7 +18,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
   try {
     const { studentName, studentEmail, notes, isoStart, isoEnd, tz } = await request.json();
-    const calendar = getCalendar();
+    const calendar = await getCalendar();
     const fields: Record<string, unknown> = {};
     if (studentName) fields.summary = `Spanish Lesson - ${studentName}`;
     if (notes !== undefined) fields.description = `Goals: ${notes}`;
@@ -50,7 +50,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const { id } = await params;
   try {
     const { email } = await request.json().catch(() => ({}));
-    const calendar = getCalendar();
+    const calendar = await getCalendar();
     if (email) {
       const existing = await calendar.events.get({ calendarId: CALENDAR_ID, eventId: id });
       const attendees = existing.data.attendees ?? [];

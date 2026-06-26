@@ -5,7 +5,7 @@ import { getCalendar, CALENDAR_ID } from '@/lib/calendar';
 export async function GET(request: NextRequest) {
   if (!await getTeacherSession(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   try {
-    const res = await getCalendar().events.list({
+    const res = await (await getCalendar()).events.list({
       calendarId: CALENDAR_ID,
       timeMin: new Date().toISOString(),
       q: 'Spanish Lesson',

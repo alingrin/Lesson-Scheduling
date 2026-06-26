@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email required' }, { status: 400 });
     }
 
-    const calendar = getCalendar();
+    const calendar = await getCalendar();
     const now = DateTime.utc();
 
     const res = await calendar.events.list({

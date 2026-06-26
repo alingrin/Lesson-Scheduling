@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createSession } from '@/lib/session';
+import { saveTeacherCredentials } from '@/lib/teacher-credentials';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -23,6 +24,11 @@ export async function GET(request: NextRequest) {
 
     const userinfo = await google.oauth2({ version: 'v2', auth: oauth2 }).userinfo.get();
     const email = userinfo.data.email ?? '';
+
+    // Persist credentials so calendar + Gmail work without env vars
+    if (tokens.refresh_token) {
+      await saveTeacherCredentials({ refreshToken: tokens.refresh_token, email });
+    }
 
     const sessionId = await createSession({
       accessToken: tokens.access_token!,

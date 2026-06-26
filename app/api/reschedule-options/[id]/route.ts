@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   try {
     const days = parseInt(request.nextUrl.searchParams.get('days') || '14', 10);
-    const calendar = getCalendar();
+    const calendar = await getCalendar();
     const now = DateTime.utc();
     const timeMin = now.toISO()!;
     const timeMax = now.plus({ days }).toISO()!;

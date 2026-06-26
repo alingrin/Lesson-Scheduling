@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const calendar = getCalendar();
+    const calendar = await getCalendar();
     const rawStart = searchParams.get('start');
     const requestedStart = rawStart ? DateTime.fromISO(rawStart, { zone: tz }) : null;
     const startDate = requestedStart?.isValid

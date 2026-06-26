@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing booking fields' }, { status: 400 });
     }
 
-    const calendar = getCalendar();
+    const calendar = await getCalendar();
     const isGoogleMeet = lessonType === 'meet';
 
     const fb = await calendar.freebusy.query({
