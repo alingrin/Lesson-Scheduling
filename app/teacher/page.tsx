@@ -6,6 +6,8 @@ import {
 } from '@/components/tz-utils';
 import { useRouter } from 'next/navigation';
 
+interface Booking { id: string; summary: string; start: string; studentEmail: string | null }
+
 type ViewMode = 'week' | 'month' | 'custom';
 interface Slot { start: string; end: string }
 interface TeacherSettings { workDayStart: number; workDayEnd: number; workDays: number[]; workTimezone: string }
@@ -32,6 +34,11 @@ export default function TeacherPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [settings, setSettings] = useState<TeacherSettings>({ workDayStart: 9, workDayEnd: 17, workDays: [1, 2, 3, 4, 5], workTimezone: 'UTC' });
   const [settingsStatus, setSettingsStatus] = useState('');
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingsStatus, setBookingsStatus] = useState('');
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancelMsg, setCancelMsg] = useState('');
+  const [cancelStatus, setCancelStatus] = useState('');
   const initialized = useRef(false);
 
   const slotKey = (s: Slot) => `${s.start}|${s.end}`;
@@ -65,6 +72,34 @@ export default function TeacherPage() {
     setStatus('');
   }, [router]);
 
+  const loadBookings = useCallback(async () => {
+    setBookingsStatus('Loading...');
+    const res = await fetch('/api/teacher/bookings');
+    if (res.status === 403) { router.push('/teacher-login'); return; }
+    if (!res.ok) { setBookingsStatus('Error loading bookings'); return; }
+    const data = await res.json();
+    setBookings(data.bookings ?? []);
+    setBookingsStatus('');
+  }, [router]);
+
+  async function cancelBooking(id: string) {
+    setCancelStatus('Cancelling...');
+    const res = await fetch(`/api/teacher/bookings/${id}`, {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ message: cancelMsg }),
+    });
+    if (!res.ok) {
+      const d = await res.json();
+      setCancelStatus(`Error: ${d.error}`);
+      return;
+    }
+    setCancellingId(null);
+    setCancelMsg('');
+    setCancelStatus('');
+    loadBookings();
+  }
+
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -77,7 +112,8 @@ export default function TeacherPage() {
     setCurrentStart(todayInTZ(savedTZ));
     setCurrentMonth(startOfMonthUTC(new Date()));
     fetch('/api/settings').then((r) => r.ok ? r.json() : null).then((d) => { if (d) setSettings(d); });
-  }, []);
+    loadBookings();
+  }, [loadBookings]);
 
   useEffect(() => { load(viewMode, currentStart, currentMonth, tz, customDays); }, [load, viewMode, currentStart, currentMonth, tz, customDays]);
 
@@ -314,6 +350,60 @@ export default function TeacherPage() {
           {Array.from({ length: span }, (_, i) => renderDayCell(addDays(currentStart, i)))}
         </div>
       )}
+
+      <div className="mt-8">
+        <div className="flex items-center gap-3 mb-3">
+          <h2 className="text-lg font-bold">Upcoming Bookings</h2>
+          <button onClick={loadBookings} className="border rounded px-2 py-0.5 text-sm hover:bg-es-yellow-light">Refresh</button>
+          {bookingsStatus && <span className="text-sm text-gray-500">{bookingsStatus}</span>}
+        </div>
+        {bookings.length === 0 && !bookingsStatus && (
+          <p className="text-sm text-gray-400">No upcoming bookings.</p>
+        )}
+        <div className="space-y-2">
+          {bookings.map((b) => {
+            const timeStr = new Date(b.start).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const studentName = b.summary.replace(/^Spanish Lesson\s*-\s*/i, '');
+            return (
+              <div key={b.id} className="border rounded p-3 bg-white max-w-xl">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div>
+                    <div className="font-medium text-sm">{studentName}</div>
+                    <div className="text-xs text-gray-500">{timeStr}{b.studentEmail ? ` · ${b.studentEmail}` : ''}</div>
+                  </div>
+                  {cancellingId !== b.id && (
+                    <button onClick={() => { setCancellingId(b.id); setCancelMsg(''); setCancelStatus(''); }}
+                      className="border border-red-400 text-red-600 rounded px-3 py-1 text-sm hover:bg-red-50">
+                      Cancel lesson
+                    </button>
+                  )}
+                </div>
+                {cancellingId === b.id && (
+                  <div className="mt-3 border-t pt-3">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Message to student (optional)</label>
+                    <textarea
+                      value={cancelMsg}
+                      onChange={(e) => setCancelMsg(e.target.value)}
+                      rows={3}
+                      placeholder="e.g. I'm sorry, I have an unexpected conflict. Please rebook at your convenience."
+                      className="w-full border rounded px-2 py-1 text-sm resize-none"
+                    />
+                    <div className="flex items-center gap-2 mt-2">
+                      <button onClick={() => cancelBooking(b.id)} className="bg-es-red text-white rounded px-3 py-1 text-sm hover:bg-es-red-dark">
+                        Confirm cancellation
+                      </button>
+                      <button onClick={() => { setCancellingId(null); setCancelStatus(''); }} className="border rounded px-3 py-1 text-sm hover:bg-es-yellow-light">
+                        Never mind
+                      </button>
+                      {cancelStatus && <span className="text-sm text-gray-500">{cancelStatus}</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <p className="mt-4 text-sm"><a href="/" className="text-es-red underline">Back to student view</a></p>
     </main>
