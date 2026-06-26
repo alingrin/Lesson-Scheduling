@@ -89,14 +89,15 @@ export default function TeacherPage() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ message: cancelMsg }),
     });
+    const d = await res.json();
     if (!res.ok) {
-      const d = await res.json();
       setCancelStatus(`Error: ${d.error}`);
       return;
     }
     setCancellingId(null);
     setCancelMsg('');
     setCancelStatus('');
+    if (d.emailError) setStatus(`Lesson cancelled. Note: ${d.emailError}`);
     loadBookings();
   }
 
