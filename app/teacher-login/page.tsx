@@ -13,7 +13,7 @@ function TeacherLoginInner() {
         <p className="text-sm text-gray-500">Sign in with your Google account to access the teacher dashboard.</p>
         {error && (
           <p className="text-sm text-es-red">
-            {error === 'cancelled' ? 'Sign-in was cancelled.' : 'Sign-in failed. Please try again.'}
+            {error === 'cancelled' ? 'Sign-in was cancelled.' : error === 'wrong_account' ? 'That Google account is not authorised. Please sign in with the teacher account.' : 'Sign-in failed. Please try again.'}
           </p>
         )}
         <a

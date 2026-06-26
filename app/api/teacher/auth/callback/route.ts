@@ -25,6 +25,11 @@ export async function GET(request: NextRequest) {
     const userinfo = await google.oauth2({ version: 'v2', auth: oauth2 }).userinfo.get();
     const email = userinfo.data.email ?? '';
 
+    const allowed = process.env.TEACHER_EMAIL;
+    if (allowed && email.toLowerCase() !== allowed.toLowerCase()) {
+      return NextResponse.redirect(`${BASE_URL}/teacher-login?error=wrong_account`);
+    }
+
     // Persist credentials so calendar + Gmail work without env vars
     if (tokens.refresh_token) {
       await saveTeacherCredentials({ refreshToken: tokens.refresh_token, email });
